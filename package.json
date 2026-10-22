@@ -1,7 +1,7 @@
 {
   "name": "kafmonde",
   "productName": "Kafmonde",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Le Kafmonde d'Immigré Production, dans sa propre fenêtre.",
   "author": "Immigré Production",
   "license": "UNLICENSED",
@@ -30,7 +30,7 @@
     "files": ["main.js", "preload.js", "connexion.html", "hors-ligne.html", "build/icon.png"],
     "win": {
       "target": "nsis",
-      "icon": "build/icon.png",
+      "icon": "build/icon.ico",
       "artifactName": "Kafmonde-Setup.${ext}"
     },
     "nsis": {
