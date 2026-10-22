@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' file:; connect-src https: http:" />
+    <title>Kafmonde — hors ligne</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { display: grid; place-items: center; background: radial-gradient(circle at 50% 38%, #2a1a48, #0d0a16 70%); color: #f3ecff; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; user-select: none; }
+      main { display: grid; justify-items: center; gap: 14px; max-width: 420px; padding: 24px; text-align: center; }
+      img { width: 120px; height: 120px; animation: float 3s ease-in-out infinite; }
+      h1 { margin: 0; color: #ffd32e; font-size: 26px; letter-spacing: .02em; }
+      p { margin: 0; color: #b9aed0; }
+      button { margin-top: 6px; padding: 10px 22px; border: 0; border-radius: 999px; background: #ffd32e; color: #2a1a05; font: 700 15px system-ui, "Segoe UI", sans-serif; cursor: pointer; }
+      button:hover { background: #ffe066; }
+      button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+      small { color: #7d7196; }
+      @keyframes float { 50% { transform: translateY(-8px); } }
+      @media (prefers-reduced-motion: reduce) { img { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="build/icon.png" alt="" />
+      <h1>Le Kafmonde ne répond pas</h1>
+      <p>Pas d'internet, ou le site fait une pause. On réessaie tout seuls toutes les 15 secondes.</p>
+      <button id="retry" type="button" autofocus>Réessayer</button>
+      <small id="state">Nouvel essai dans 15 s</small>
+    </main>
+    <script>
+      // L'adresse à retrouver vient de l'appli (?u=…).
+      const target = new URLSearchParams(location.search).get("u") || "https://immigreprod.pages.dev/monde/";
+      const state = document.getElementById("state");
+      let wait = 15, busy = false;
+      async function retry() {
+        if (busy) return;
+        busy = true;
+        state.textContent = "Connexion…";
+        try {
+          await fetch(target, { mode: "no-cors", cache: "no-store" });
+          location.href = target;
+        } catch {
+          wait = 15;
+          state.textContent = "Toujours rien. Nouvel essai dans 15 s";
+          busy = false;
+        }
+      }
+      document.getElementById("retry").addEventListener("click", retry);
+      addEventListener("online", retry);
+      setInterval(() => {
+        if (busy) return;
+        wait -= 1;
+        if (wait <= 0) retry();
+        else state.textContent = `Nouvel essai dans ${wait} s`;
+      }, 1000);
+    </script>
+  </body>
+</html>

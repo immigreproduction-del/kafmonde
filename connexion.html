@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' file:" />
+    <title>Kafmonde — connexion</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { display: grid; place-items: center; background: radial-gradient(circle at 50% 30%, #2a1a48, #0d0a16 70%); color: #f3ecff; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; }
+      main { display: grid; justify-items: center; gap: 12px; width: min(380px, calc(100% - 32px)); padding: 24px 0; text-align: center; }
+      img { width: 112px; height: 112px; animation: float 3s ease-in-out infinite; }
+      h1 { margin: 0; color: #ffd32e; font-size: 26px; letter-spacing: .02em; }
+      p { margin: 0; color: #b9aed0; }
+      .tabs { display: flex; gap: 4px; width: 100%; padding: 4px; border: 1px solid #3a2c58; border-radius: 999px; background: #160f26; box-sizing: border-box; }
+      .tabs button { flex: 1; padding: 8px 10px; border: 0; border-radius: 999px; background: transparent; color: #b9aed0; font: 700 14px system-ui, "Segoe UI", sans-serif; cursor: pointer; }
+      .tabs button[aria-selected="true"] { background: #2e2147; color: #ffd32e; }
+      form { display: grid; gap: 10px; width: 100%; text-align: left; }
+      label { display: grid; gap: 4px; color: #d8cdee; font-size: 13px; font-weight: 600; }
+      input { padding: 11px 14px; border: 1px solid #3a2c58; border-radius: 12px; background: #120c20; color: #fff; font: 15px system-ui, "Segoe UI", sans-serif; outline: none; }
+      input:focus { border-color: #ffd32e; box-shadow: 0 0 0 3px rgba(255, 211, 46, .18); }
+      .submit { margin-top: 4px; padding: 12px 22px; border: 0; border-radius: 999px; background: #ffd32e; color: #2a1a05; font: 700 15px system-ui, "Segoe UI", sans-serif; cursor: pointer; }
+      .submit:hover { background: #ffe066; }
+      .submit:disabled { opacity: .6; cursor: wait; }
+      button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+      .error { min-height: 21px; color: #ff8fa8; font-size: 14px; text-align: center; }
+      small { color: #7d7196; }
+      [hidden] { display: none !important; }
+      @keyframes float { 50% { transform: translateY(-8px); } }
+      @media (prefers-reduced-motion: reduce) { img { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="build/icon.png" alt="" />
+      <h1>Entre dans le Kafmonde</h1>
+      <p>Avec ton kompte Immigré, le même que sur le site.</p>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabLogin" aria-selected="true">Se konnecter</button>
+        <button type="button" role="tab" id="tabRegister" aria-selected="false">Créer un kompte</button>
+      </div>
+      <form id="form" novalidate>
+        <label>Pseudo <input id="pseudo" name="username" autocomplete="username" maxlength="24" required autofocus /></label>
+        <label>Mot de passe <input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required /></label>
+        <label id="againRow" hidden>Encore le mot de passe <input id="again" type="password" autocomplete="new-password" maxlength="200" /></label>
+        <div class="error" id="error" role="alert"></div>
+        <button class="submit" id="submit" type="submit">Se konnecter</button>
+      </form>
+      <small id="hint">Mot de passe oublié ? Demande à Luigi de t'en donner un nouveau.</small>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let mode = "login";
+      try { $("pseudo").value = localStorage.getItem("pseudo") || ""; } catch {}
+      if ($("pseudo").value) $("password").focus();
+
+      function show(next) {
+        mode = next;
+        const register = mode === "register";
+        $("tabLogin").setAttribute("aria-selected", String(!register));
+        $("tabRegister").setAttribute("aria-selected", String(register));
+        $("againRow").hidden = !register;
+        $("password").autocomplete = register ? "new-password" : "current-password";
+        $("submit").textContent = register ? "Créer mon kompte" : "Se konnecter";
+        $("hint").textContent = register
+          ? "Pseudo de 3 à 24 karactères, sans espace. Mot de passe d'au moins 10 karactères."
+          : "Mot de passe oublié ? Demande à Luigi de t'en donner un nouveau.";
+        $("error").textContent = "";
+      }
+      $("tabLogin").addEventListener("click", () => show("login"));
+      $("tabRegister").addEventListener("click", () => show("register"));
+
+      $("form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const username = $("pseudo").value.trim(), password = $("password").value;
+        const error = (text) => { $("error").textContent = text; };
+        if (!username || !password) return error("Il faut un pseudo et un mot de passe.");
+        if (mode === "register") {
+          if (!/^[\p{L}\p{N}_.-]{3,24}$/u.test(username)) return error("Le pseudo doit contenir 3 à 24 karactères, sans espace.");
+          if (password.length < 10) return error("Le mot de passe doit contenir au moins 10 karactères.");
+          if (password !== $("again").value) return error("Les deux mots de passe ne sont pas pareils.");
+        }
+        $("submit").disabled = true;
+        error("");
+        const result = await window.kafmonde.account(mode, username, password).catch(() => ({ error: "L'appli n'a pas pu joindre le site." }));
+        if (result.ok) {
+          try { localStorage.setItem("pseudo", result.name || username); } catch {}
+          $("submit").textContent = "C'est parti…";
+          return; // l'appli ouvre le jeu
+        }
+        $("submit").disabled = false;
+        error(result.error || "Ça n'a pas marché, réessaie.");
+      });
+    </script>
+  </body>
+</html>

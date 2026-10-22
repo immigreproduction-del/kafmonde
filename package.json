@@ -1,0 +1,50 @@
+{
+  "name": "kafmonde",
+  "productName": "Kafmonde",
+  "version": "1.0.0",
+  "description": "Le Kafmonde d'Immigré Production, dans sa propre fenêtre.",
+  "author": "Immigré Production",
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/immigreproduction-del/kafmonde",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "local": "electron . --adresse=http://127.0.0.1:8788/monde/?as=zorglub",
+    "installeur": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.9"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "fr.immigreprod.kafmonde",
+    "productName": "Kafmonde",
+    "copyright": "Immigré Production",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "electronLanguages": ["fr", "en-US"],
+    "compression": "maximum",
+    "files": ["main.js", "preload.js", "connexion.html", "hors-ligne.html", "build/icon.png"],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png",
+      "artifactName": "Kafmonde-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kafmonde",
+      "uninstallDisplayName": "Kafmonde",
+      "deleteAppDataOnUninstall": false,
+      "installerLanguages": ["fr_FR"],
+      "language": "1036"
+    },
+    "publish": [{ "provider": "github", "owner": "immigreproduction-del", "repo": "kafmonde", "releaseType": "release" }]
+  }
+}
