@@ -19,6 +19,21 @@ const UPDATE_EVERY = 6 * 3600 * 1000;
 
 let win = null;
 
+// ---------------------------------------------------------------- IPv4 pour le site et le serveur du jeu
+// Chez certains opérateurs (Free), la route IPv6 vers Cloudflare rame : 1 à 3 s par aller-retour au lieu
+// de 30 ms en IPv4. On résout donc ces deux adresses en IPv4 avant le démarrage (la règle doit être posée
+// avant que Chromium ne s'en serve) ; si la résolution échoue, rien ne change.
+const SERVERS = ["immigreprod.pages.dev", "immigre-online.immigre-online.workers.dev"];
+function forceIPv4() {
+  try {
+    const script = `const dns=require("dns");Promise.all(${JSON.stringify(SERVERS)}.map((h)=>dns.promises.resolve4(h).then((a)=>[h,a[0]]).catch(()=>null))).then((r)=>process.stdout.write(JSON.stringify(r.filter(Boolean))))`;
+    const out = require("node:child_process").execFileSync(process.execPath, ["-e", script], { env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" }, timeout: 4000, windowsHide: true });
+    const rules = JSON.parse(String(out)).filter(([, ip]) => /^\d+\.\d+\.\d+\.\d+$/.test(ip)).map(([host, ip]) => `MAP ${host} ${ip}`);
+    if (rules.length) app.commandLine.appendSwitch("host-resolver-rules", rules.join(","));
+  } catch {}
+}
+if (!flag) forceIPv4();
+
 // ---------------------------------------------------------------- où l'on peut aller dans la fenêtre
 const parse = (url) => { try { return new URL(url); } catch { return null; } };
 const inGame = (url) => url?.origin === ORIGIN && url.pathname.startsWith("/monde");
